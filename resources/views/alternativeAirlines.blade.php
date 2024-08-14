@@ -164,5 +164,38 @@ $(document).ready(function() {
             }
         });
     });
+
+    // Add an event listener to the input field for the 'keyup' event
+    $('input[placeholder="Departure Airport"], input[placeholder="Arrival Airport"]').on('keyup', function() {
+        // Get the current value of the input field
+        var airport = $(this).val();
+
+        // Check if the query is more than 3 characters
+        if (airport.length >= 3) {  // Change `query.length` to `airport.length`
+            // Send an AJAX POST request to the Laravel route
+            $.ajax({
+                url: '/api/search-airport', // Laravel route URL
+                type: 'POST',
+                data: {
+                    keyword: airport, // Send the query as data
+                },
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // CSRF token for security
+                },
+                success: function(response) {
+                    // Handle successful response
+                    console.log('Airports found:', response);
+                    // You can update the UI with the response data here (e.g., show a dropdown of airport suggestions)
+                },
+                error: function(xhr, status, error) {
+                    // Handle errors
+                    console.error('Error:', error);
+                    console.error('Status:', status);
+                    console.error('XHR:', xhr);
+                }
+            });
+        }
+    });
 });
+
 </script>

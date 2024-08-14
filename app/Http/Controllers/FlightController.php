@@ -23,13 +23,27 @@ class FlightController extends Controller
             'returnRate' => 'nullable|date|after_or_equal:departureDate',
             'adults' => 'required|integer|min:1|max:10',
         ]);
-        
+
         // Use the AmadeusService to search for flights
         try {
             $flightOffers = $this->amadeusService->searchFlights($validatedData);
             return response()->json($flightOffers);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Unable to fetch flight offers. Please try again later.'], 500);
+        }
+    }
+
+    public function searchAirport(Request $request){
+                // Validate the request parameters
+                $validatedData = $request->validate([
+                    'keyword' => 'required|string|max:255|min:3',
+                ]);      
+        // Use the AmadeusService to search for flights
+        try {
+            $airports = $this->amadeusService->searchForAirport($validatedData);
+            return response()->json($airports);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Unable to fetch airports. Please try again later.'], 500);
         }
     }
     

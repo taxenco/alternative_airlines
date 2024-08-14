@@ -5,5 +5,6 @@ return [
     'endpoints' => [
         'token' => '/v1/security/oauth2/token',
         'flight_offers' => '/v2/shopping/flight-offers',
+        'airports' => '/v1/reference-data/locations',
     ],
 ];
