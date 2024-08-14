@@ -1,18 +1,41 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Services\AmadeusService;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
+use App\Traits\DatesFormatTrait;
+
+/**
+ * Class FlightController
+ * 
+ * This controller handles flight search and airport search functionalities using the AmadeusService.
+ */
 class FlightController extends Controller
 {
+    use DatesFormatTrait;
+
+    /**
+     * @var AmadeusService
+     */
     protected $amadeusService;
 
+    /**
+     * FlightController constructor.
+     * 
+     * @param AmadeusService $amadeusService
+     */
     public function __construct(AmadeusService $amadeusService)
     {
         $this->amadeusService = $amadeusService;
     }
 
+    /**
+     * Search for flight offers based on the request parameters.
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function index(Request $request)
     {
         // Validate the request parameters
@@ -27,87 +50,77 @@ class FlightController extends Controller
         // Use the AmadeusService to search for flights
         try {
             $flightOffers = $this->amadeusService->searchFlights($validatedData);
-    
-            // Reduce the amount of information sent to the front-end
-            $filteredOffers = collect($flightOffers['data'])->map(function($offer) {
-                $segments = $offer['itineraries'][0]['segments'];
-                $segmentCount = count($segments);
-
-                return [
-                    'id' => $offer['id'],
-                    'source' => $offer['source'],
-                    'itinerary' => [
-                        'totalDuration' => $this->convertDurationToHumanReadable($offer['itineraries'][0]['duration']),
-                        'stop' => $segmentCount > 1 ? $segmentCount - 1 : 0, // Number of stops
-                        'segments' => collect($segments)->map(function($segment) {
-                            return [
-                                'departure' => [
-                                    'airportCode' => $segment['departure']['iataCode'],
-                                    'city' => $segment['departure']['iataCode'], // Use dictionary for city names if needed
-                                    'dateTime' => $this->formatDateTime($segment['departure']['at']),
-                                ],
-                                'arrival' => [
-                                    'airportCode' => $segment['arrival']['iataCode'],
-                                    'city' => $segment['arrival']['iataCode'], // Use dictionary for city names if needed
-                                    'dateTime' => $this->formatDateTime($segment['arrival']['at']),
-                                ],
-                                'carrier' => $segment['carrierCode'], // Use dictionary for carrier names if needed
-                                'flightNumber' => $segment['number'],
-                                'duration' => $this->convertDurationToHumanReadable($segment['duration']),
-                            ];
-                        })->toArray()
-                    ],
-                    'price' => [
-                        'currency' => $offer['price']['currency'],
-                        'total' => $offer['price']['total'],
-                    ]
-                ];
-            });
-
-            return response()->json(['data' => $filteredOffers]);
+            
+            return response()->json(['data' => $this->handleSearchFlightOffersResponse($flightOffers)]);
 
         } catch (\Exception $e) {
             return response()->json(['error' => 'Unable to fetch flight offers. Please try again later.'], 500);
         }
     }
     
-
     /**
-     * Convert ISO 8601 duration (e.g., PT3H50M) to a human-readable format.
+     * Handle the response from the flight search.
+     * 
+     * This method processes the raw flight offers data and formats it into a more
+     * human-readable and usable format.
+     * 
+     * @param array $flightOffers
+     * @return \Illuminate\Support\Collection
      */
-    private function convertDurationToHumanReadable($duration)
+    private function handleSearchFlightOffersResponse($flightOffers)
     {
-        $hours = 0;
-        $minutes = 0;
+        return collect($flightOffers['data'])->map(function($offer) {
+            $segments = $offer['itineraries'][0]['segments'];
+            $segmentCount = count($segments);
 
-        preg_match('/PT(\d+H)?(\d+M)?/', $duration, $matches);
-
-        if (isset($matches[1])) {
-            $hours = (int) rtrim($matches[1], 'H');
-        }
-
-        if (isset($matches[2])) {
-            $minutes = (int) rtrim($matches[2], 'M');
-        }
-
-        return ($hours > 0 ? $hours . ' hours ' : '') . ($minutes > 0 ? $minutes . ' minutes' : '');
+            return [
+                'id' => $offer['id'],
+                'source' => $offer['source'],
+                'itinerary' => [
+                    'totalDuration' => $this->convertISO8601ToHumanReadable($offer['itineraries'][0]['duration']),
+                    'stop' => $segmentCount > 1 ? $segmentCount - 1 : 0, // Number of stops
+                    'segments' => collect($segments)->map(function($segment) {
+                        return [
+                            'departure' => [
+                                'airportCode' => $segment['departure']['iataCode'],
+                                'city' => $segment['departure']['iataCode'], // Use dictionary for city names if needed
+                                'dateTime' => $this->formatDateTime($segment['departure']['at']),
+                            ],
+                            'arrival' => [
+                                'airportCode' => $segment['arrival']['iataCode'],
+                                'city' => $segment['arrival']['iataCode'], // Use dictionary for city names if needed
+                                'dateTime' => $this->formatDateTime($segment['arrival']['at']),
+                            ],
+                            'carrier' => $segment['carrierCode'], // Use dictionary for carrier names if needed
+                            'flightNumber' => $segment['number'],
+                            'duration' => $this->convertISO8601ToHumanReadable($segment['duration']),
+                        ];
+                    })->toArray()
+                ],
+                'price' => [
+                    'currency' => $offer['price']['currency'],
+                    'total' => $offer['price']['total'],
+                ]
+            ];
+        });
     }
 
     /**
-     * Format dateTime to a more human-readable format.
+     * Search for airports based on a keyword.
+     * 
+     * This method allows users to search for airports by a keyword (e.g., city name, airport name).
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    private function formatDateTime($dateTime)
+    public function searchAirport(Request $request)
     {
-        return Carbon::parse($dateTime)->format('F j, Y, g:i A');
-    }
-    
-
-    public function searchAirport(Request $request){
-                // Validate the request parameters
-                $validatedData = $request->validate([
-                    'keyword' => 'required|string|max:255|min:3',
-                ]);      
-        // Use the AmadeusService to search for flights
+        // Validate the request parameters
+        $validatedData = $request->validate([
+            'keyword' => 'required|string|max:255|min:3',
+        ]);      
+        
+        // Use the AmadeusService to search for airports
         try {
             $airports = $this->amadeusService->searchForAirport($validatedData);
             return response()->json($airports);
@@ -115,6 +128,4 @@ class FlightController extends Controller
             return response()->json(['error' => 'Unable to fetch airports. Please try again later.'], 500);
         }
     }
-    
 }
-
