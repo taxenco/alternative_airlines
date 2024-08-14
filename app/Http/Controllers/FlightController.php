@@ -1,23 +1,21 @@
 <?php
 
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
 use App\Services\AmadeusService;
+use Illuminate\Http\Request;
 
-class FlightController  extends Controller
+class FlightController extends Controller
 {
     protected $amadeusService;
 
-    // Inject the AmadeusService into the controller
     public function __construct(AmadeusService $amadeusService)
     {
         $this->amadeusService = $amadeusService;
     }
 
-    // Example method to search for flights
-    public function searchFlights(Request $request)
+    public function index(Request $request)
     {
-        // Validate the request parameters (you can adjust the validation rules as needed)
+        // Validate the request parameters
         $validated = $request->validate([
             'departure_airport' => 'required|string|max:255',
             'arrival_airport' => 'required|string|max:255',
@@ -34,5 +32,5 @@ class FlightController  extends Controller
             return response()->json(['error' => 'Unable to fetch flights. Please try again later.'], 500);
         }
     }
-    
 }
+

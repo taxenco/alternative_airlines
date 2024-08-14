@@ -1,8 +1,5 @@
 <?php
-
-
 namespace App\Services;
-
 use Amadeus\Amadeus;
 
 class AmadeusService
@@ -11,16 +8,38 @@ class AmadeusService
 
     public function __construct()
     {
-        // Initialize the Amadeus client here
-        $this->amadeus = Amadeus::builder()
-            ->setClientId(config('services.amadeus.client_id'))
-            ->setClientSecret(config('services.amadeus.client_secret'))
-            ->build();
+        $clientId = env('AMADEUS_CLIENT_ID');
+        $clientSecret = env('AMADEUS_CLIENT_SECRET');
+
+        // Initialize the Amadeus client with your credentials
+        $this->amadeus = Amadeus::builder($clientId, $clientSecret)->build();
     }
 
-    public function searchFlights($params)
+    public function searchFlights(array $params)
     {
-        return $this->amadeus->get('/v2/shopping/flight-offers', $params)->getData();
+        try {
+            // Prepare the parameters for the flight search
+            $searchParams = [
+                'originLocationCode' => $params['departure_airport'],
+                'destinationLocationCode' => $params['arrival_airport'],
+                'departureDate' => $params['departure_date'],
+                'adults' => $params['passengers'],
+            ];
+
+            // Add return date if provided
+            if (!empty($params['return_date'])) {
+                $searchParams['returnDate'] = $params['return_date'];
+            }
+
+            // Perform the search using the FlightOffersSearch service
+            $response = $this->amadeus->getShopping()->getFlightOffers()->get($searchParams);
+
+            // Return the flight data
+            return $response;
+        } catch (\Exception $e) {
+            // Handle exceptions and return an error message
+            return ['error' => $e->getMessage()];
+        }
     }
 
     // Other Amadeus API methods can be added here
