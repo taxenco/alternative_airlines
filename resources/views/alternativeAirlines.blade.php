@@ -123,9 +123,46 @@
             <button type="submit">Search</button>
         </form>
     </div>
-
-    <!-- Bootstrap JS and dependencies (Popper.js) -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.min.js"></script>
 </body>
 </html>
+
+<!-- Bootstrap JS and dependencies (Popper.js) -->
+ <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('.search-form').on('submit', function(e) {
+        e.preventDefault(); // Prevent the form from submitting the traditional way
+        
+        // Gather form data
+        var formData = {
+            departure_airport: $('input[placeholder="Departure Airport"]').val(),
+            arrival_airport: $('input[placeholder="Arrival Airport"]').val(),
+            departure_date: $('input[placeholder="Departure Date"]').val(),
+            return_date: $('input[placeholder="Return Date"]').val(),
+            passengers: $('select').val()
+        };
+
+        // Send AJAX POST request
+        $.ajax({
+            url: '/api/search-flights/',
+            type: 'POST',
+            data: formData,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Add this if you're using Laravel's CSRF protection
+            },
+            success: function(response) {
+                // Handle successful response
+                console.log('Flights found:', response);
+                // You can update the UI with the response data here
+            },
+            error: function(xhr, status, error) {
+                // Handle errors
+                console.error('Error:', error);
+                console.error('Status:', status);
+                console.error('XHR:', xhr);
+            }
+        });
+    });
+});
+</script>
