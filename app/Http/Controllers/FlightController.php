@@ -67,7 +67,7 @@ class FlightController extends Controller
      * @param array $flightOffers
      * @return \Illuminate\Support\Collection
      */
-    private function handleSearchFlightOffersResponse($flightOffers)
+    private function handleSearchFlightOffersResponse(array $flightOffers)
     {
         return collect($flightOffers['data'])->map(function($offer) {
             $segments = $offer['itineraries'][0]['segments'];
@@ -103,29 +103,5 @@ class FlightController extends Controller
                 ]
             ];
         });
-    }
-
-    /**
-     * Search for airports based on a keyword.
-     * 
-     * This method allows users to search for airports by a keyword (e.g., city name, airport name).
-     * 
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function searchAirport(Request $request)
-    {
-        // Validate the request parameters
-        $validatedData = $request->validate([
-            'keyword' => 'required|string|max:255|min:3',
-        ]);      
-        
-        // Use the AmadeusService to search for airports
-        try {
-            $airports = $this->amadeusService->searchForAirport($validatedData);
-            return response()->json($airports);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Unable to fetch airports. Please try again later.'], 500);
-        }
     }
 }
