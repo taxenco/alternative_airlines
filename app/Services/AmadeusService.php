@@ -64,12 +64,24 @@ class AmadeusService
      */
     public function searchFlights(array $params): array
     {
+        // Ensure that the access token is set
+        if (empty($this->accessToken)) {
+            throw new \Exception('Access token is missing.');
+        }
+
         $baseUrl = config('amadeus.base_url');
         $flightOffersEndpoint = config('amadeus.endpoints.flight_offers');
-        $url = $baseUrl . $flightOffersEndpoint;
 
-        // Make an HTTP GET request with the access token and query parameters
-        $response = Http::withToken($this->accessToken)->get($url, $params);
+        // Build the full URL with query parameters appended
+        $url = $baseUrl . $flightOffersEndpoint . '?' . http_build_query($params);
+
+        // Set the Authorization header with the Bearer token
+        $headers = [
+            'Authorization' => 'Bearer ' . $this->accessToken,
+        ];
+
+        // Make an HTTP GET request with the Authorization header
+        $response = Http::withHeaders($headers)->get($url);
 
         // Check if the request was successful and return the flight offers data
         if ($response->successful()) {
@@ -79,6 +91,7 @@ class AmadeusService
         // Throw an exception if the flight offers retrieval failed
         throw new \Exception('Failed to retrieve flight offers: ' . $response->body());
     }
+
 
     // Additional Amadeus API methods can be added here
 }

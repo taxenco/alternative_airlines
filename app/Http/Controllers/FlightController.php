@@ -16,21 +16,22 @@ class FlightController extends Controller
     public function index(Request $request)
     {
         // Validate the request parameters
-        $validated = $request->validate([
-            'departure_airport' => 'required|string|max:255',
-            'arrival_airport' => 'required|string|max:255',
-            'departure_date' => 'required|date|after_or_equal:today',
-            'return_date' => 'nullable|date|after_or_equal:departure_date',
-            'passengers' => 'required|integer|min:1|max:10',
+        $validatedData = $request->validate([
+            'originLocationCode' => 'required|string|max:255',
+            'destinationLocationCode' => 'required|string|max:255',
+            'departureDate' => 'required|date|after_or_equal:today',
+            'returnRate' => 'nullable|date|after_or_equal:departureDate',
+            'adults' => 'required|integer|min:1|max:10',
         ]);
-
+        
         // Use the AmadeusService to search for flights
         try {
-            $flights = $this->amadeusService->searchFlights($validated);
-            return response()->json($flights);
+            $flightOffers = $this->amadeusService->searchFlights($validatedData);
+            return response()->json($flightOffers);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Unable to fetch flights. Please try again later.'], 500);
+            return response()->json(['error' => 'Unable to fetch flight offers. Please try again later.'], 500);
         }
     }
+    
 }
 

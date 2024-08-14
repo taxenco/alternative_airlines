@@ -136,11 +136,11 @@ $(document).ready(function() {
         
         // Gather form data
         var formData = {
-            departure_airport: $('input[placeholder="Departure Airport"]').val(),
-            arrival_airport: $('input[placeholder="Arrival Airport"]').val(),
-            departure_date: $('input[placeholder="Departure Date"]').val(),
-            return_date: $('input[placeholder="Return Date"]').val(),
-            passengers: $('select').val()
+            originLocationCode: $('input[placeholder="Departure Airport"]').val(),
+            destinationLocationCode: $('input[placeholder="Arrival Airport"]').val(),
+            departureDate: $('input[placeholder="Departure Date"]').val(),
+            returnDate: $('input[placeholder="Return Date"]').val(),
+            adults: $('select').val()
         };
 
         // Send AJAX POST request
