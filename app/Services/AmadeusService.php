@@ -1,46 +1,84 @@
 <?php
 namespace App\Services;
-use Amadeus\Amadeus;
+
+use Illuminate\Support\Facades\Http;
 
 class AmadeusService
 {
-    protected $amadeus;
+    /**
+     * @var string $accessToken Amadeus API access token.
+     */
+    protected string $accessToken;
 
+    /**
+     * Constructor to initialize the AmadeusService.
+     * Retrieves the Amadeus access token upon instantiation.
+     *
+     * @throws \Exception If the access token could not be retrieved.
+     */
     public function __construct()
     {
-        $clientId = env('AMADEUS_CLIENT_ID');
-        $clientSecret = env('AMADEUS_CLIENT_SECRET');
-
-        // Initialize the Amadeus client with your credentials
-        $this->amadeus = Amadeus::builder($clientId, $clientSecret)->build();
+        $this->accessToken = $this->getAmadeusAccessToken();
     }
 
-    public function searchFlights(array $params)
+    /**
+     * Retrieve the Amadeus access token using client credentials.
+     *
+     * @return string Access token for Amadeus API.
+     *
+     * @throws \Exception If the access token could not be retrieved.
+     */
+    private function getAmadeusAccessToken(): string
     {
-        try {
-            // Prepare the parameters for the flight search
-            $searchParams = [
-                'originLocationCode' => $params['departure_airport'],
-                'destinationLocationCode' => $params['arrival_airport'],
-                'departureDate' => $params['departure_date'],
-                'adults' => $params['passengers'],
-            ];
+        $baseUrl = config('amadeus.base_url');
+        $tokenEndpoint = config('amadeus.endpoints.token');
+        $url = $baseUrl . $tokenEndpoint;
 
-            // Add return date if provided
-            if (!empty($params['return_date'])) {
-                $searchParams['returnDate'] = $params['return_date'];
-            }
+        $clientSecret = env('AMADEUS_CLIENT_SECRET');
+        $clientId = env('AMADEUS_CLIENT_ID');
 
-            // Perform the search using the FlightOffersSearch service
-            $response = $this->amadeus->getShopping()->getFlightOffers()->get($searchParams);
+        // Make an HTTP POST request to retrieve the access token
+        $response = Http::asForm()->post($url, [
+            'grant_type' => 'client_credentials',
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret,
+        ]);
 
-            // Return the flight data
-            return $response;
-        } catch (\Exception $e) {
-            // Handle exceptions and return an error message
-            return ['error' => $e->getMessage()];
+        // Check if the request was successful and return the token
+        if ($response->successful()) {
+            return $response->json()['access_token'];
         }
+
+        // Throw an exception if the token retrieval failed
+        throw new \Exception('Failed to retrieve Amadeus access token');
     }
 
-    // Other Amadeus API methods can be added here
+    /**
+     * Search for flights using the Amadeus API.
+     *
+     * @param array $params Query parameters for searching flights.
+     *
+     * @return array Flight offers data returned by the API.
+     *
+     * @throws \Exception If the flight offers could not be retrieved.
+     */
+    public function searchFlights(array $params): array
+    {
+        $baseUrl = config('amadeus.base_url');
+        $flightOffersEndpoint = config('amadeus.endpoints.flight_offers');
+        $url = $baseUrl . $flightOffersEndpoint;
+
+        // Make an HTTP GET request with the access token and query parameters
+        $response = Http::withToken($this->accessToken)->get($url, $params);
+
+        // Check if the request was successful and return the flight offers data
+        if ($response->successful()) {
+            return $response->json();
+        }
+
+        // Throw an exception if the flight offers retrieval failed
+        throw new \Exception('Failed to retrieve flight offers: ' . $response->body());
+    }
+
+    // Additional Amadeus API methods can be added here
 }
