@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Flight;
+use App\Http\Controllers\FlightController ;
 
 
-Route::post('/search-flights', [Flight::class, 'index']);
+Route::post('/search-flights', [FlightController ::class, 'index']);

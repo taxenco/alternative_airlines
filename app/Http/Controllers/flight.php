@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Services\AmadeusService;
 
-class Flight extends Controller
+class FlightController  extends Controller
 {
     protected $amadeusService;
 
