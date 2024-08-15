@@ -10,20 +10,21 @@ use App\Traits\DatesFormatTrait;
  * Class FlightController
  * 
  * This controller handles flight search and airport search functionalities using the AmadeusService.
+ * It provides methods to search for flights and process the response from the Amadeus API.
  */
 class FlightController extends Controller
 {
     use DatesFormatTrait;
 
     /**
-     * @var AmadeusService
+     * @var AmadeusService The service used to interact with the Amadeus API for flight searches.
      */
     protected $amadeusService;
 
     /**
      * FlightController constructor.
      * 
-     * @param AmadeusService $amadeusService
+     * @param AmadeusService $amadeusService An instance of the AmadeusService to be used for flight searches.
      */
     public function __construct(AmadeusService $amadeusService)
     {
@@ -33,8 +34,12 @@ class FlightController extends Controller
     /**
      * Search for flight offers based on the request parameters.
      * 
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * This method validates the incoming request, performs a flight search using the AmadeusService,
+     * and returns the search results as a JSON response. In case of errors, it returns a 500 response
+     * with an error message.
+     * 
+     * @param Request $request The request instance containing search parameters.
+     * @return \Illuminate\Http\JsonResponse A JSON response with flight offers or an error message.
      */
     public function index(Request $request)
     {
@@ -46,7 +51,7 @@ class FlightController extends Controller
             'returnRate' => 'nullable|date|after_or_equal:departureDate',
             'adults' => 'required|integer|min:1|max:10',
         ]);
-    
+
         // Use the AmadeusService to search for flights
         try {
             $flightOffers = $this->amadeusService->searchFlights($validatedData);
@@ -54,6 +59,7 @@ class FlightController extends Controller
             return response()->json(['data' => $this->handleSearchFlightOffersResponse($flightOffers)]);
 
         } catch (\Exception $e) {
+            // Return an error response if there is an issue with the flight search
             return response()->json(['error' => 'Unable to fetch flight offers. Please try again later.'], 500);
         }
     }
@@ -64,11 +70,12 @@ class FlightController extends Controller
      * This method processes the raw flight offers data and formats it into a more
      * human-readable and usable format.
      * 
-     * @param array $flightOffers
-     * @return \Illuminate\Support\Collection
+     * @param array $flightOffers The raw flight offers data from the Amadeus API.
+     * @return \Illuminate\Support\Collection A collection of formatted flight offers.
      */
     private function handleSearchFlightOffersResponse(array $flightOffers)
     {
+        // Map through the flight offers to format the data
         return collect($flightOffers['data'])->map(function($offer) {
             $segments = $offer['itineraries'][0]['segments'];
             $segmentCount = count($segments);
