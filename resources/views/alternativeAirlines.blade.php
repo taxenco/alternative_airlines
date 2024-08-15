@@ -90,7 +90,6 @@
             background-color: #0056b3;
         }
 
-        /* Spinner Styles */
         .spinner-container {
             display: none; /* Hidden by default */
             position: absolute;
@@ -140,7 +139,6 @@
             100% { width: 100%; }
         }
 
-        /* Dim background when spinner is active */
         .search-container.spinner-active::before {
             content: '';
             position: absolute;
@@ -152,8 +150,6 @@
             z-index: 90;
             border-radius: 30px;
         }
-
-        /* Modal Styles */
 
         .modal-overlay {
             position: fixed;
@@ -274,6 +270,16 @@
             flex-wrap: wrap;
             justify-content: space-between;
         }
+
+        .form-label {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .mb-3 {
+            margin-bottom: 20px !important;
+        }
     </style>
 </head>
 <body>
@@ -282,34 +288,40 @@
         <form class="search-form">
             <div class="input-group">
                 <i class="fas fa-plane-departure"></i>
-                <select id="departure-airport" required>
+                <select id="departure-airport" class="form-select" required>
                     <option value="" disabled selected>Select Departure Airport</option>
                 </select>
             </div>
             <div class="input-group">
                 <i class="fas fa-plane-arrival"></i>
-                <select id="arrival-airport" required>
+                <select id="arrival-airport" class="form-select" required>
                     <option value="" disabled selected>Select Arrival Airport</option>
                 </select>
             </div>
-            <div class="input-group">
-                <i class="fas fa-calendar-alt"></i>
-                <input type="date" placeholder="Departure Date" required>
+            <div class="mb-3">
+                <label for="departure-date" class="form-label">Departure Date</label>
+                <div class="input-group">
+                    <i class="fas fa-calendar-alt"></i>
+                    <input type="date" id="departure-date" class="form-control" placeholder="Departure Date" required>
+                </div>
             </div>
-            <div class="input-group">
-                <i class="fas fa-calendar-alt"></i>
-                <input type="date" placeholder="Return Date">
+            <div class="mb-3">
+                <label for="return-date" class="form-label">Return Date (Optional)</label>
+                <div class="input-group">
+                    <i class="fas fa-calendar-alt"></i>
+                    <input type="date" id="return-date" class="form-control" placeholder="Return Date">
+                </div>
             </div>
             <div class="input-group">
                 <i class="fas fa-users"></i>
-                <select id="passenger" required>
+                <select id="passenger" class="form-select" required>
                     <option value="1">1 Passenger</option>
                     <option value="2">2 Passengers</option>
                     <option value="3">3 Passengers</option>
                     <option value="4">4 Passengers</option>
                 </select>
             </div>
-            <button type="submit">Search</button>
+            <button type="submit" class="btn btn-primary">Search</button>
         </form>
         <!-- Spinner Container -->
         <div class="spinner-container">
@@ -392,6 +404,34 @@ $(document).ready(function() {
 
     $('.search-form').on('submit', function(e) {
         e.preventDefault(); // Prevent the form from submitting the traditional way
+
+        // Validation
+        const departureAirport = $('#departure-airport').val();
+        const arrivalAirport = $('#arrival-airport').val();
+        const departureDate = $('#departure-date').val();
+        const returnDate = $('#return-date').val();
+        const today = new Date().toISOString().split('T')[0];
+
+        if (departureAirport === arrivalAirport) {
+            alert('Departure and Arrival airports cannot be the same.');
+            return;
+        }
+
+        if (departureDate < today) {
+            alert('Departure Date cannot be in the past.');
+            return;
+        }
+
+        if (returnDate) {
+            if (returnDate < today) {
+                alert('Return Date cannot be in the past.');
+                return;
+            }
+            if (returnDate < departureDate) {
+                alert('Return Date cannot be earlier than the Departure Date.');
+                return;
+            }
+        }
         
         // Show spinner
         $('.search-container').addClass('spinner-active');
@@ -399,10 +439,10 @@ $(document).ready(function() {
         
         // Gather form data
         var formData = {
-            originLocationCode: $('#departure-airport').val(),
-            destinationLocationCode: $('#arrival-airport').val(),
-            departureDate: $('input[placeholder="Departure Date"]').val(),
-            returnDate: $('input[placeholder="Return Date"]').val(),
+            originLocationCode: departureAirport,
+            destinationLocationCode: arrivalAirport,
+            departureDate: departureDate,
+            returnDate: returnDate,
             adults: $('#passenger').val()
         };
 
