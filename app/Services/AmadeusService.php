@@ -1,6 +1,7 @@
 <?php
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class AmadeusService
@@ -75,51 +76,73 @@ class AmadeusService
         // Build the full URL with query parameters appended
         $url = $baseUrl . $flightOffersEndpoint . '?' . http_build_query($params);
 
-        // Set the Authorization header with the Bearer token
-        $headers = [
-            'Authorization' => 'Bearer ' . $this->accessToken,
-        ];
+        // Generate a unique cache key based on the URL
+        $cacheKey = 'flight_offers_' . md5($url);
 
-        // Make an HTTP GET request with the Authorization header
-        $response = Http::withHeaders($headers)->get($url);
+        // Attempt to retrieve data from the cache or store it if not cached
+        return Cache::remember($cacheKey, now()->addMinutes(15), function () use ($url) {
+            // Set the Authorization header with the Bearer token
+            $headers = [
+                'Authorization' => 'Bearer ' . $this->accessToken,
+            ];
 
-        // Check if the request was successful and return the flight offers data
-        if ($response->successful()) {
-            return $response->json();
-        }
+            // Make an HTTP GET request with the Authorization header
+            $response = Http::withHeaders($headers)->get($url);
 
-        // Throw an exception if the flight offers retrieval failed
-        throw new \Exception('Failed to retrieve flight offers: ' . $response->body());
+            // Check if the request was successful and return the flight offers data
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            // Throw an exception if the flight offers retrieval failed
+            throw new \Exception('Failed to retrieve flight offers: ' . $response->body());
+        });
     }
 
-    public function searchForAirport($params){
-                // Ensure that the access token is set
-                if (empty($this->accessToken)) {
-                    throw new \Exception('Access token is missing.');
-                }
-        
-                $baseUrl = config('amadeus.base_url');
-                $flightOffersEndpoint = config('amadeus.endpoints.airports');
-                
-                $params['subType'] = 'AIRPORT';
-                
-                // Build the full URL with query parameters appended
-                $url = $baseUrl . $flightOffersEndpoint . '?' . http_build_query($params);
-        
-                // Set the Authorization header with the Bearer token
-                $headers = [
-                    'Authorization' => 'Bearer ' . $this->accessToken,
-                ];
-        
-                // Make an HTTP GET request with the Authorization header
-                $response = Http::withHeaders($headers)->get($url);
-        
-                // Check if the request was successful and return the flight offers data
-                if ($response->successful()) {
-                    return $response->json();
-                }
-        
-                // Throw an exception if the flight offers retrieval failed
-                throw new \Exception('Failed to retrieve flight offers: ' . $response->body());
+    /**
+     * Search for airports using the Amadeus API.
+     *
+     * @param array $params Query parameters for searching airports.
+     *
+     * @return array Airport data returned by the API.
+     *
+     * @throws \Exception If the airport data could not be retrieved.
+     */
+    public function searchForAirport(array $params): array
+    {
+        // Ensure that the access token is set
+        if (empty($this->accessToken)) {
+            throw new \Exception('Access token is missing.');
+        }
+
+        $baseUrl = config('amadeus.base_url');
+        $airportSearchEndpoint = config('amadeus.endpoints.airports');
+
+        $params['subType'] = 'AIRPORT';
+
+        // Build the full URL with query parameters appended
+        $url = $baseUrl . $airportSearchEndpoint . '?' . http_build_query($params);
+
+        // Generate a unique cache key based on the URL
+        $cacheKey = 'airport_search_' . md5($url);
+
+        // Attempt to retrieve data from the cache or store it if not cached
+        return Cache::remember($cacheKey, now()->addMinutes(15), function () use ($url) {
+            // Set the Authorization header with the Bearer token
+            $headers = [
+                'Authorization' => 'Bearer ' . $this->accessToken,
+            ];
+
+            // Make an HTTP GET request with the Authorization header
+            $response = Http::withHeaders($headers)->get($url);
+
+            // Check if the request was successful and return the airport data
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            // Throw an exception if the airport data retrieval failed
+            throw new \Exception('Failed to retrieve airport data: ' . $response->body());
+        });
     }
 }
