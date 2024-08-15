@@ -1,66 +1,118 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Flight Search Web Application
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Overview
 
-## About Laravel
+This project is a simple flight search web application that leverages the Amadeus Flight Low-fare Search API to allow users to search for flights based on their input criteria. Upon submitting the search form, the application fetches and displays the results.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Technologies Used
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Back-end**:
+  - **Framework**: Laravel
+  - **Language**: PHP 8.2
+  - **API Integration**: Amadeus Flight Low-fare Search API
+  - **Service Provider**: A custom service provider is used to handle all Amadeus API requests, ensuring clean separation of concerns. The service is utilized within the controller to process flight search queries.
+  - **Caching**: A caching mechanism is implemented to refresh every 15 minutes, reducing duplicate API calls and improving performance.
+  - **Unit Testing**: Unit tests are included to verify the functionality of the application. However, due to reliance on the third-party Amadeus API, some issues may arise during testing, particularly in cases where API requests are made.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Front-end**:
+  - **Languages**: HTML, CSS, JavaScript
+  - **Libraries/Frameworks**:
+    - **jQuery**: For handling events and AJAX requests.
+    - **Bootstrap 5**: For responsive design and layout.
+    - **Font Awesome**: For icons.
 
-## Learning Laravel
+## Features
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Flight Search Form**:
+  - Users can input departure and destination locations, travel dates, and the number of passengers.
+  - The form includes input validation, such as preventing selection of the same departure and arrival airports, and ensuring that dates are not in the past.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- **Search Results Display**:
+  - Fetches flight data from the Amadeus API and displays a list of available flights matching the user’s criteria.
+  - Results include key details like departure and arrival cities, duration, number of stops, carrier, and price.
+  - A "Book Now" button is included for each flight result (linking to booking functionality can be added in future iterations).
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **User Feedback**:
+  - A loading spinner and progress bar are shown while the search is being processed.
+  - Modal overlays are used to display search results in a user-friendly manner.
 
-## Laravel Sponsors
+- **Caching**:
+  - API responses are cached for 15 minutes to avoid duplicate calls to the Amadeus API and to improve response times for identical queries within that time frame.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- **Unit Testing**:
+  - The application includes unit tests to ensure the core functionality works as expected. However, due to the integration with the third-party Amadeus API, some tests may encounter issues, such as failures when live API calls are required during the test execution.
 
-### Premium Partners
+## Installation and Setup
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### Prerequisites
 
-## Contributing
+- PHP 8.2 or higher
+- Composer (for managing PHP dependencies)
+- Laravel (already included in the project)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Steps to Set Up the Project
 
-## Code of Conduct
+1. **Clone the Repository**:
+   ```bash
+   git clone <repository-url>
+   cd <project-directory>
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+2. **Install PHP Dependencies**:
+   ```bash
+   composer install
+   ```
 
-## Security Vulnerabilities
+3. **Set Up Environment Variables**:
+   - Copy the `.env.example` file to `.env`:
+     ```bash
+     cp .env.example .env
+     ```
+   - Update the `.env` file with your Amadeus API credentials:
+     ```
+     AMADEUS_API_KEY=your_api_key_here
+     AMADEUS_API_SECRET=your_api_secret_here
+     ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+4. **Generate Application Key**:
+   ```bash
+   php artisan key:generate
+   ```
 
-## License
+5. **Run Migrations** (if any):
+   ```bash
+   php artisan migrate
+   ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+6. **Serve the Application**:
+   ```bash
+   php artisan serve
+   ```
+
+7. **Access the Application**:
+   - Open your web browser and go to `http://localhost:8000`.
+
+## Usage
+
+1. **Flight Search**:
+   - On the homepage, fill in the flight search form with your desired travel details, including departure and arrival airports, travel dates, and the number of passengers.
+   - Click "Search" to submit the form.
+
+2. **View Search Results**:
+   - The application will query the Amadeus API (utilizing the service provider and cache) and display a list of available flights that match your search criteria in a modal overlay.
+   - If no flights are found, an alert will be shown.
+
+3. **Book Flights**:
+   - Although the "Book Now" button is currently a placeholder, it can be linked to a booking page or external booking service in future development stages.
+
+## Additional Information
+
+- **Code Quality**:
+  - The code focuses on functionality and structure, with a basic yet responsive and user-friendly interface.
+
+- **Further Development**:
+  - Potential improvements include adding filters, sorting options, enhanced error handling, add more unit tests, and user authentication for personalized experiences.
+
+## Contact
+
+For any questions regarding this project or the task, please contact Carlos at [carlos.beltran.exposito@gmail.com](mailto:carlos.beltran.exposito@gmail.com).
