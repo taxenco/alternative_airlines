@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alternative Airlines - Flight Search</title>
+    <title>Flight Search</title>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
@@ -153,6 +152,66 @@
             z-index: 90;
             border-radius: 30px;
         }
+
+        /* Modal Styles */
+
+        .flightResultsModal {
+            display: none;
+        }
+
+        .modal-header {
+            border-bottom: none;
+            justify-content: center;
+        }
+
+        .modal-title {
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .modal-body {
+            text-align: center;
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-footer {
+            border-top: none;
+            justify-content: center;
+        }
+
+        .modal-footer button {
+            border-radius: 50px;
+            padding: 10px 30px;
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            box-shadow: 0px 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .result-item h5 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #007bff;
+        }
+
+        .result-item p {
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -163,14 +222,12 @@
                 <i class="fas fa-plane-departure"></i>
                 <select id="departure-airport" required>
                     <option value="" disabled selected>Select Departure Airport</option>
-                    <!-- UK Airports will be populated here -->
                 </select>
             </div>
             <div class="input-group">
                 <i class="fas fa-plane-arrival"></i>
                 <select id="arrival-airport" required>
                     <option value="" disabled selected>Select Arrival Airport</option>
-                    <!-- UK Airports will be populated here -->
                 </select>
             </div>
             <div class="input-group">
@@ -202,105 +259,149 @@
         </div>
     </div>
 
+    <!-- Modal -->
+    <div class="modal fade flightResultsModal" id="flightResultsModal" tabindex="-1" aria-labelledby="flightResultsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="flightResultsModalLabel">Flight Search Results</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Results will be injected here -->
+                    <div id="flight-results-content">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS and dependencies (Popper.js) -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.min.js"></script>
 
     <script>
-    $(document).ready(function() {
-        const airports = [
-            // UK Airports
-            { name: "London Heathrow", code: "LHR" },
-            { name: "Gatwick Airport", code: "LGW" },
-            { name: "Manchester Airport", code: "MAN" },
-            { name: "Edinburgh Airport", code: "EDI" },
-            { name: "Birmingham Airport", code: "BHX" },
-            { name: "Glasgow Airport", code: "GLA" },
-            { name: "Bristol Airport", code: "BRS" },
-            { name: "Liverpool John Lennon Airport", code: "LPL" },
-            { name: "Newcastle Airport", code: "NCL" },
-            { name: "London Stansted", code: "STN" },
-            // Major EU Airports
-            { name: "Charles de Gaulle Airport, Paris", code: "CDG" },
-            { name: "Frankfurt Airport", code: "FRA" },
-            { name: "Amsterdam Schiphol Airport", code: "AMS" },
-            { name: "Madrid Barajas Airport", code: "MAD" },
-            { name: "Barcelona El Prat Airport", code: "BCN" },
-            { name: "Lisbon Airport", code: "LIS" },
-            { name: "Rome Fiumicino Airport", code: "FCO" },
-            { name: "Milan Malpensa Airport", code: "MXP" },
-            { name: "Vienna International Airport", code: "VIE" },
-            { name: "Brussels Airport", code: "BRU" },
-            { name: "Munich Airport", code: "MUC" },
-            { name: "Copenhagen Airport", code: "CPH" },
-            { name: "Stockholm Arlanda Airport", code: "ARN" },
-            { name: "Helsinki Airport", code: "HEL" },
-            { name: "Zurich Airport", code: "ZRH" },
-            { name: "Budapest Airport", code: "BUD" },
-            { name: "Athens International Airport", code: "ATH" },
-            { name: "Warsaw Chopin Airport", code: "WAW" },
-            { name: "Prague Václav Havel Airport", code: "PRG" },
-            { name: "Dublin Airport", code: "DUB" },
-            { name: "Vienna International Airport", code: "VIE" },
-            { name: "Berlin Brandenburg Airport", code: "BER" },
-        ];
+$(document).ready(function() {
+    const airports = [
+        { name: "London Heathrow", code: "LHR" },
+        { name: "Gatwick Airport", code: "LGW" },
+        { name: "Manchester Airport", code: "MAN" },
+        { name: "Edinburgh Airport", code: "EDI" },
+        { name: "Birmingham Airport", code: "BHX" },
+        { name: "Glasgow Airport", code: "GLA" },
+        { name: "Bristol Airport", code: "BRS" },
+        { name: "Liverpool John Lennon Airport", code: "LPL" },
+        { name: "Newcastle Airport", code: "NCL" },
+        { name: "London Stansted", code: "STN" },
+        { name: "Charles de Gaulle Airport, Paris", code: "CDG" },
+        { name: "Frankfurt Airport", code: "FRA" },
+        { name: "Amsterdam Schiphol Airport", code: "AMS" },
+        { name: "Madrid Barajas Airport", code: "MAD" },
+        { name: "Barcelona El Prat Airport", code: "BCN" },
+        { name: "Lisbon Airport", code: "LIS" },
+        { name: "Rome Fiumicino Airport", code: "FCO" },
+        { name: "Milan Malpensa Airport", code: "MXP" },
+        { name: "Vienna International Airport", code: "VIE" },
+        { name: "Brussels Airport", code: "BRU" },
+        { name: "Munich Airport", code: "MUC" },
+        { name: "Copenhagen Airport", code: "CPH" },
+        { name: "Stockholm Arlanda Airport", code: "ARN" },
+        { name: "Helsinki Airport", code: "HEL" },
+        { name: "Zurich Airport", code: "ZRH" },
+        { name: "Budapest Airport", code: "BUD" },
+        { name: "Athens International Airport", code: "ATH" },
+        { name: "Warsaw Chopin Airport", code: "WAW" },
+        { name: "Prague Václav Havel Airport", code: "PRG" },
+        { name: "Dublin Airport", code: "DUB" },
+        { name: "Berlin Brandenburg Airport", code: "BER" },
+    ];
 
-        function populateAirportDropdown(selectElement) {
-            airports.forEach(function(airport) {
-                const option = $('<option></option>').attr('value', airport.code).text(`${airport.name} (${airport.code})`);
-                selectElement.append(option);
-            });
-        }
+    function populateAirportDropdown(selectElement) {
+        airports.forEach(function(airport) {
+            const option = $('<option></option>').attr('value', airport.code).text(`${airport.name} (${airport.code})`);
+            selectElement.append(option);
+        });
+    }
 
-        populateAirportDropdown($('#departure-airport'));
-        populateAirportDropdown($('#arrival-airport'));
+    populateAirportDropdown($('#departure-airport'));
+    populateAirportDropdown($('#arrival-airport'));
 
-        $('.search-form').on('submit', function(e) {
-            e.preventDefault(); // Prevent the form from submitting the traditional way
-            
-            // Show spinner
-            $('.search-container').addClass('spinner-active');
-            $('.spinner-container').show();
-            
-            // Gather form data
-            var formData = {
-                originLocationCode: $('#departure-airport').val(),
-                destinationLocationCode: $('#arrival-airport').val(),
-                departureDate: $('input[placeholder="Departure Date"]').val(),
-                returnDate: $('input[placeholder="Return Date"]').val(),
-                adults: $('#passenger').val()
-            };
+    $('.search-form').on('submit', function(e) {
+        e.preventDefault(); // Prevent the form from submitting the traditional way
+        
+        // Show spinner
+        $('.search-container').addClass('spinner-active');
+        $('.spinner-container').show();
+        
+        // Gather form data
+        var formData = {
+            originLocationCode: $('#departure-airport').val(),
+            destinationLocationCode: $('#arrival-airport').val(),
+            departureDate: $('input[placeholder="Departure Date"]').val(),
+            returnDate: $('input[placeholder="Return Date"]').val(),
+            adults: $('#passenger').val()
+        };
 
-            // Send AJAX POST request
-            $.ajax({
-                url: '/api/search-flights/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Add this if you're using Laravel's CSRF protection
-                },
-                success: function(response) {
-                    // Handle successful response
-                    console.log('Flights found:', response);
-                    // You can update the UI with the response data here
-                    
-                    // Hide spinner
-                    $('.search-container').removeClass('spinner-active');
-                    $('.spinner-container').hide();
-                },
-                error: function(xhr, status, error) {
-                    // Handle errors
-                    console.error('Error:', error);
-                    console.error('Status:', status);
-                    console.error('XHR:', xhr);
+        // Send AJAX POST request
+        $.ajax({
+            url: '/api/search-flights/',
+            type: 'POST',
+            data: formData,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Add this if you're using Laravel's CSRF protection
+            },
+            success: function(response) {
+                // Hide spinner
+                $('.search-container').removeClass('spinner-active');
+                $('.spinner-container').hide();
+                // Populate modal with results and show it
+                if (response.data && response.data.length > 0) {
+                    $('#flight-results-content').html(generateFlightResultsHTML(response.data));
+                    $('.flightResultsModal').css('display', 'block').modal('show');
 
-                    // Hide spinner
-                    $('.search-container').removeClass('spinner-active');
-                    $('.spinner-container').hide();
+                } else {
+                    alert("No flights found. Please try different search criteria.");
                 }
-            });
+            },
+            error: function(xhr, status, error) {
+                // Handle errors
+                console.error('Error:', error);
+                console.error('Status:', status);
+                console.error('XHR:', xhr);
+
+                // Hide spinner
+                $('.search-container').removeClass('spinner-active');
+                $('.spinner-container').hide();
+
+                alert("An error occurred while searching for flights. Please try again later.");
+            }
         });
     });
+
+    function generateFlightResultsHTML(response) {
+    console.log(response);
+    let html = '';
+    
+        response.forEach(function(flight) {
+            html += `
+                <div class="result-item">
+                    <h5>${flight.itinerary.segments[0].departure.city} (${flight.itinerary.segments[0].departure.airportCode}) to 
+                        ${flight.itinerary.segments[flight.itinerary.segments.length - 1].arrival.city} (${flight.itinerary.segments[flight.itinerary.segments.length - 1].arrival.airportCode})
+                    </h5>
+                    <p>Duration: ${flight.itinerary.totalDuration}</p>
+                    <p>Stops: ${flight.itinerary.stop}</p>
+                    <p>Carrier: ${flight.itinerary.segments[0].carrier}</p>
+                    <p>Price: ${flight.price.currency} ${flight.price.total}</p>
+                </div>`;
+        });
+    
+    return html;
+}
+    
+});
     </script>
 </body>
 </html>
