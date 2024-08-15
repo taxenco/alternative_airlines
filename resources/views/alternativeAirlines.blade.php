@@ -93,6 +93,7 @@
 
 <script>
 $(document).ready(function() {
+    // List of airports with their names and codes
     const airports = [
         { name: "London Heathrow", code: "LHR" },
         { name: "Gatwick Airport", code: "LGW" },
@@ -127,26 +128,40 @@ $(document).ready(function() {
         { name: "Berlin Brandenburg Airport", code: "BER" },
     ];
 
+    /**
+     * Populates a given select element with airport options.
+     * 
+     * @param {jQuery} selectElement - The jQuery object representing the select element to populate.
+     */
     function populateAirportDropdown(selectElement) {
         airports.forEach(function(airport) {
-            const option = $('<option></option>').attr('value', airport.code).text(`${airport.name} (${airport.code})`);
+            const option = $('<option></option>')
+                .attr('value', airport.code)
+                .text(`${airport.name} (${airport.code})`);
             selectElement.append(option);
         });
     }
 
+    // Populate the departure and arrival airport dropdowns
     populateAirportDropdown($('#departure-airport'));
     populateAirportDropdown($('#arrival-airport'));
 
+    /**
+     * Handles the form submission for searching flights.
+     * 
+     * @param {Event} e - The submit event.
+     */
     $('.search-form').on('submit', function(e) {
-        e.preventDefault(); // Prevent the form from submitting the traditional way
+        e.preventDefault(); // Prevent the default form submission
 
-        // Validation
+        // Get form values
         const departureAirport = $('#departure-airport').val();
         const arrivalAirport = $('#arrival-airport').val();
         const departureDate = $('#departure-date').val();
         const returnDate = $('#return-date').val();
         const today = new Date().toISOString().split('T')[0];
 
+        // Validate form input
         if (departureAirport === arrivalAirport) {
             alert('Departure and Arrival airports cannot be the same.');
             return;
@@ -168,7 +183,7 @@ $(document).ready(function() {
             }
         }
         
-        // Show spinner
+        // Show loading spinner
         $('.search-container').addClass('spinner-active');
         $('.spinner-container').show();
         
@@ -181,23 +196,23 @@ $(document).ready(function() {
             adults: $('#passenger').val()
         };
 
-        // Send AJAX POST request
+        // Send AJAX POST request to search flights
         $.ajax({
             url: '/api/search-flights/',
             type: 'POST',
             data: formData,
             headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Add this if you're using Laravel's CSRF protection
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Include CSRF token if using Laravel
             },
             success: function(response) {
-                // Hide spinner
+                // Hide loading spinner
                 $('.search-container').removeClass('spinner-active');
                 $('.spinner-container').hide();
-                // Populate modal with results and show it
+
+                // Display flight results or alert if no flights found
                 if (response.data && response.data.length > 0) {
                     $('#flight-results-content').html(generateFlightResultsHTML(response.data));
                     $('.modal-overlay').fadeIn();
-
                 } else {
                     alert("No flights found. Please try different search criteria.");
                 }
@@ -208,7 +223,7 @@ $(document).ready(function() {
                 console.error('Status:', status);
                 console.error('XHR:', xhr);
 
-                // Hide spinner
+                // Hide loading spinner
                 $('.search-container').removeClass('spinner-active');
                 $('.spinner-container').hide();
 
@@ -217,6 +232,12 @@ $(document).ready(function() {
         });
     });
 
+    /**
+     * Generates HTML for flight results.
+     * 
+     * @param {Array} response - The flight data array.
+     * @returns {string} - The generated HTML string.
+     */
     function generateFlightResultsHTML(response) {
         console.log(response);
         let html = '';
@@ -238,17 +259,16 @@ $(document).ready(function() {
         return html;
     }
 
-    // Close Modal
+    // Close the modal when the close button is clicked
     $('.btn-close').on('click', function() {
         $('.modal-overlay').fadeOut();
     });
 
-    // Close Modal on outside click
+    // Close the modal when clicking outside of it
     $(document).on('click', function(event) {
         if ($(event.target).closest('.modal-content').length === 0) {
             $('.modal-overlay').fadeOut();
         }
     });
-    
 });
     </script>
