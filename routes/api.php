@@ -5,4 +5,3 @@ use App\Http\Controllers\FlightController;
 
 
 Route::post('/search-flights', [FlightController ::class, 'index']);
-Route::post('/search-airport', [FlightController ::class, 'searchAirport']);
