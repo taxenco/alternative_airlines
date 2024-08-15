@@ -155,13 +155,41 @@
 
         /* Modal Styles */
 
-        .flightResultsModal {
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
             display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        .modal-dialog-centered {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 2rem auto; /* Margin at top and bottom */
+            max-width: 90%; /* Make modal wide but not full-width */
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-height: 80vh; /* Occupy most of the screen height */
+            overflow-y: auto; /* Enable scrolling */
+            padding: 20px;
+            background-color: #fff;
         }
 
         .modal-header {
             border-bottom: none;
             justify-content: center;
+            text-align: center;
         }
 
         .modal-title {
@@ -170,22 +198,28 @@
         }
 
         .modal-body {
-            text-align: center;
-        }
-
-        .modal-content {
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            padding: 0;
         }
 
         .modal-footer {
             border-top: none;
-            justify-content: center;
+            display: flex;
+            justify-content: center; /* Center the button horizontally */
+            padding-top: 15px;
         }
 
-        .modal-footer button {
+        .modal-footer .btn-close {
             border-radius: 50px;
             padding: 10px 30px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .modal-footer .btn-close:hover {
+            background-color: #0056b3;
         }
 
         .result-item {
@@ -195,6 +229,13 @@
             border-radius: 10px;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
+            flex: 1 0 calc(33.333% - 30px); /* 3 columns with space */
+            margin: 15px;
+            background-color: #f9f9f9;
+            text-align: center; /* Center text */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .result-item:hover {
@@ -211,6 +252,27 @@
             font-size: 14px;
             margin-bottom: 5px;
             color: #333;
+        }
+
+        .result-item .btn-book {
+            margin-top: 10px;
+            padding: 10px 20px;
+            border-radius: 50px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .result-item .btn-book:hover {
+            background-color: #218838;
+        }
+
+        .results-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
         }
     </style>
 </head>
@@ -259,21 +321,20 @@
         </div>
     </div>
 
-    <!-- Modal -->
-    <div class="modal fade flightResultsModal" id="flightResultsModal" tabindex="-1" aria-labelledby="flightResultsModalLabel" aria-hidden="true">
+    <!-- Modal Overlay -->
+    <div class="modal-overlay">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="flightResultsModalLabel">Flight Search Results</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">Flight Search Results</h5>
                 </div>
                 <div class="modal-body">
                     <!-- Results will be injected here -->
-                    <div id="flight-results-content">
+                    <div id="flight-results-content" class="results-grid">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn-close">Close</button>
                 </div>
             </div>
         </div>
@@ -360,7 +421,7 @@ $(document).ready(function() {
                 // Populate modal with results and show it
                 if (response.data && response.data.length > 0) {
                     $('#flight-results-content').html(generateFlightResultsHTML(response.data));
-                    $('.flightResultsModal').css('display', 'block').modal('show');
+                    $('.modal-overlay').fadeIn();
 
                 } else {
                     alert("No flights found. Please try different search criteria.");
@@ -382,8 +443,8 @@ $(document).ready(function() {
     });
 
     function generateFlightResultsHTML(response) {
-    console.log(response);
-    let html = '';
+        console.log(response);
+        let html = '';
     
         response.forEach(function(flight) {
             html += `
@@ -395,11 +456,24 @@ $(document).ready(function() {
                     <p>Stops: ${flight.itinerary.stop}</p>
                     <p>Carrier: ${flight.itinerary.segments[0].carrier}</p>
                     <p>Price: ${flight.price.currency} ${flight.price.total}</p>
+                    <button class="btn-book">Book Now</button>
                 </div>`;
         });
     
-    return html;
-}
+        return html;
+    }
+
+    // Close Modal
+    $('.btn-close').on('click', function() {
+        $('.modal-overlay').fadeOut();
+    });
+
+    // Close Modal on outside click
+    $(document).on('click', function(event) {
+        if ($(event.target).closest('.modal-content').length === 0) {
+            $('.modal-overlay').fadeOut();
+        }
+    });
     
 });
     </script>
